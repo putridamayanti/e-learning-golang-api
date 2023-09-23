@@ -59,10 +59,13 @@ func CreateUser(c *gin.Context)  {
 func GetUserById(c *gin.Context)  {
 	id := c.Param("id")
 
-	result := config.FindOne(UserCollection, bson.M{ "id": id }, options.FindOne().SetProjection(bson.M{"password": 0}))
-	if result == nil {
+	cursor := config.FindOne(UserCollection, bson.M{ "id": id }, options.FindOne().SetProjection(bson.M{"password": 0}))
+	var result models.Course
+	err := cursor.Decode(&result)
+	if err != nil {
 		c.JSON(http.StatusNotFound, models.Result{Data: "Data Not Found"}); return
 	}
+
 
 	c.JSON(http.StatusOK, result)
 }

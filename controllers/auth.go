@@ -3,6 +3,7 @@ package controllers
 import (
 	"elearning/config"
 	"elearning/models"
+	"elearning/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"golang.org/x/crypto/bcrypt"
@@ -16,16 +17,9 @@ func Register(c *gin.Context)  {
 		return
 	}
 
-	// Hash the password before storing it
-	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
-	}
-	user.Password = string(password)
+	user.Password = utils.HashAndSalt(user.Password)
 
-	// Save the user to the database
-	_, err = config.InsertOne("users", user)
+	_, err := config.InsertOne("users", user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
@@ -47,11 +41,8 @@ func Login(c *gin.Context)  {
 		return
 	}
 
-	// Compare the hashed password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(user.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-		return
-	}
+	pass := utils.ComparePassword(user.Password, []byte(result.Password))
+
 
 	// Generate an authentication token (we'll implement this later)
 

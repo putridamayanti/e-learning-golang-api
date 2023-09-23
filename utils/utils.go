@@ -1,8 +1,13 @@
 package utils
 
 import (
+	"elearning/models"
+	"errors"
+	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"os"
+	"time"
 )
 
 func HashAndSalt(password string) string {
@@ -24,3 +29,22 @@ func ComparePassword(hashed string, current []byte) bool {
 	return true
 }
 
+func GenerateToken(email string) (*string, error) {
+	expire := time.Now().Add(24 * time.Hour)
+
+	claims := models.Claims{
+		Email: email,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expire.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
+
+	if err == nil {
+		return &tokenString, nil
+	}
+
+	return nil, errors.New(err.Error())
+}
